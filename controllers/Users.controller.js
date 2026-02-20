@@ -1,93 +1,114 @@
-import { IncomingMessage, ServerResponse } from "node:http"
-import store from "../data/index.js"
-import { toJson } from "../utils/index.js"
+import { IncomingMessage, ServerResponse } from "node:http";
+import store from "../data/index.js";
+import { respond } from "../utils/index.js";
 
 /**
- * @type {(req: IncomingMessage, res: ServerResponse, next: () => void | Promise<void>, ) => void | Promise<void>} 
+ * @param {IncomingMessage} req
+ * @param {ServerResponse} res
+ * @param {string} id
+ */
+const GET = (req, res, id) => {
+    const user = store.Users.get(id);
+    if (!user) {
+        return respond(res, 404, { success: false, error: "user not found" });
+    }
+    return respond(res, 200, { success: true, error: null, user });
+};
+
+/**
+ * @param {IncomingMessage} req
+ * @param {ServerResponse} res
+ */
+const POST = (req, res) => {
+    const { name } = req.body;
+    if (!name) {
+        return respond(res, 400, { success: false, error: "invalid request" });
+    }
+
+    const new_user = store.Users.create(name);
+
+    if (!new_user) {
+        return respond(res, 400, { success: false, error: "user already exist" });
+    }
+
+    return respond(res, 200, { success: true, error: null, user: new_user });
+};
+
+/**
+ * @param {IncomingMessage} req
+ * @param {ServerResponse} res
+ * @param {string} id
+ */
+const DELETE = (req, res, id) => {
+    const user = store.Users.get(id);
+    if (!user) {
+        return respond(res, 404, { success: false, error: "user not found" });
+    }
+
+    const deleted = store.Users.delete(user.id);
+    if (!deleted) {
+        return respond(res, 400, { success: false, error: "user couldn't be deleted" });
+    }
+
+    return respond(res, 200, { success: true, error: null, user });
+};
+
+/**
+ * @param {IncomingMessage} req
+ * @param {ServerResponse} res
+ * @param {string} id
+ */
+const PATCH = (req, res, id) => {
+    const name = req.body.name;
+    if (!name) {
+        return respond(res, 400, { success: false, error: "invalid request" });
+    }
+
+    const user = store.Users.get(id);
+    if (!user) {
+        return respond(res, 404, { success: false, error: "user not found" });
+    }
+
+    user.name = name;
+    return respond(res, 200, { success: true, error: null, user });
+};
+
+/** @type {Record<string, (req: IncomingMessage, res: ServerResponse, id?: string) => void | Promise<void>>} */
+const methodHandlers = {
+    GET,
+    POST,
+    DELETE,
+    PATCH,
+};
+
+/**
+ * @type {(req: IncomingMessage, res: ServerResponse, next: () => void | Promise<void>) => void | Promise<void>} 
  */
 const UserController = (req, res, next) => {
-    res.setHeader("Content-Type", "application/json")
-    const { id } = req.body
+    res.setHeader("Content-Type", "application/json");
+    const { id } = req.body || {};
+
     if (!id && req.method !== "POST") {
-        res.statusCode = 400
-        res.end(toJson({ success: false, error: "invalid request" }))
-        next()
-        return
+        respond(res, 400, { success: false, error: "invalid request" });
+        return;
     }
-    switch (req.method) {
-        case "GET":
-            const user = store.Users.get(id)
-            if (!user) {
-                res.statusCode = 404
-                res.end(toJson({ success: false, error: "user not found" }))
-                break
-            }
-            res.statusCode = 200
-            res.end(toJson({ success: true, error: null, user }))
-            break
 
-        case "POST":
-            let { name } = req.body
-            if (!name) {
-                res.statusCode = 400
-                res.end(toJson({ success: false, error: "invalid request" }))
-                break
-            }
-            const new_user = store.Users.create(name)
+    const handler = methodHandlers[req.method ?? ""];
 
-            if (!new_user) {
-                res.statusCode = 400
-                res.end(toJson({ success: false, error: "user already exist" }))
-                break
-            }
-            res.statusCode = 200
-            res.end(toJson({ success: true, error: null, user: new_user }))
-            break
-        case "DELETE":
-            const user_to_delete = store.Users.get(id)
-            if (!user_to_delete) {
-                res.statusCode = 404
-                res.end(toJson({ success: false, error: "user not found" }))
-                break
-            }
-            let deleted = store.Users.delete(user_to_delete.id)
-            if (!deleted) {
-                res.statusCode = 400
-                res.end(toJson({ success: false, error: "user couldn't be deleted" }))
-                break
-            }
-            res.statusCode = 200
-            res.end(toJson({ success: true, error: null, user:user_to_delete }))
-            break
-
-        case "PATCH":
-            let user_name = req.body.name
-            if (!user_name) {
-                res.statusCode = 400
-                res.end(toJson({ success: false, error: "invalid request" }))
-                break
-            }
-            let user_to_update = store.Users.get(id)
-            if (!user_to_update) {
-                res.statusCode = 404
-                res.end(toJson({ success: false, error: "user not found" }))
-                break
-            }
-            user_to_update.name = user_name
-            res.statusCode = 200
-            res.end(toJson({ success: true, error: null, user:user_to_update }))
-            break
-
-
-        default:
-            res.statusCode = 400
-            res.end(toJson({ success: false, error: "unsupported method" }))
-            break
+    if (!handler) {
+        return respond(res, 400, { success: false, error: "unsupported method" });
     }
-    next()
 
+    if (req.method === "POST") {
+        handler(req, res);
+    } else {
+        handler(req, res, id);
+    }
 
+    if (typeof next === "function") {
+        return next();
+    }
+};
 
-}
 
 export default UserController
