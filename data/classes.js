@@ -1,4 +1,4 @@
-import { gen_id } from "../utils/index";
+import { gen_id } from "../utils/index.js";
 export class Serializable {
   constructor() {
     this.id = gen_id();
@@ -23,7 +23,7 @@ export class Serializable {
  * @method json
  * @returns {string}
  */
-class User extends Serializable {
+export class User extends Serializable {
   /**
    * @param {string} name
    */

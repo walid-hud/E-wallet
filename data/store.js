@@ -1,4 +1,4 @@
-import { Transaction } from "./classes.js";
+import { Transaction, User } from "./classes.js";
 //@ts-check
 /** @typedef {import("./classes.js").User} User */
 /** @typedef {import("./classes.js").Wallet} Wallet */
@@ -10,7 +10,7 @@ import { Transaction } from "./classes.js";
 class Store {
     constructor() {
         this.Users = new Users()
-        this.Transactions = new Transations()
+        this.Transactions = new Transactions()
         this.Wallets = new Wallets(this.Transactions)
     }
 }
@@ -25,11 +25,16 @@ class Users {
   }
 
   /**
-   *
-   * @param {User} U
+   * @returns {User | false} false if user already exists
+   * @param {string} name 
    */
-  add(U) {
-    this.#data.set(U.id, U);
+  create(name) {
+    const U = new User(name)
+  if(this.get(U.id)) return false
+    this.#data.set(
+      U.id , U
+    );
+    return U
   }
 
   /**
@@ -47,7 +52,7 @@ class Users {
   update(id , U) {
     const old_user = this.get(id);
     if (!old_user) return false;
-    this.add(U);
+    this.create(U);
     return true;
   }
   /**
@@ -65,11 +70,11 @@ class Users {
 class Wallets {
   /** @type {Map<string, Wallet>} */
   #data;
-  /**  @type {Transations} transacriotns */
+  /**  @type {Transactions} transacriotns */
   #transacions;
   /**
    * 
-   * @param {Transations} transacriotns 
+   * @param {Transactions} transacriotns 
    */
   constructor(transacriotns) {
     this.#data = new Map();
@@ -147,7 +152,7 @@ class Wallets {
   
 }
 
-class Transations {
+class Transactions {
     /** @type {Map<string, Transaction>} */
     #data
     constructor() {

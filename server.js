@@ -1,9 +1,11 @@
 import { log } from "node:console";
-import express, { json } from "./lib/index.ts";
-const app = express()
+import press, { json } from "./lib/index.ts";
+import UserController from "./controllers/Users.controller.js";
+const app = press()
 
 app.use(json)
 
+app.use(UserController , "/users")
 
 
 app.listen(3000, () => {

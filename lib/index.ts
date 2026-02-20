@@ -10,7 +10,7 @@ export type Route_handler = (
 type Routes = Map<string, Route_handler[]>;
 type Methods = Map<Method, Routes>;
 
-class _express {
+class _press {
   private server: http.Server;
   private methods: Methods;
   private middlewares: Route_handler[] = [];
@@ -153,8 +153,8 @@ class _express {
   }
 }
 
-export default function express() {
-  return new _express();
+export default function press() {
+  return new _press();
 }
 
 export const json: Route_handler = async (req, res, next) => {
