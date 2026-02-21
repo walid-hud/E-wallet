@@ -92,6 +92,7 @@ class _press {
   }
 
   private async handle(req: IncomingMessage, res: ServerResponse) {
+    
     await this.run_middleware(req, res);
     const req_method = req.method!.toLowerCase();
     const url = new URL(req.url!, "http://localhost:3000/");
@@ -161,7 +162,7 @@ export const json: Route_handler = async (req, res, next) => {
   if (req.headers["content-type"] !== "application/json") {
     res.setHeader("content-type", "application/json");
     res.statusCode = 400;
-    res.write(JSON.stringify({error: "invalid request"}));
+    res.write(JSON.stringify({success:false, error: "invalid request"}));
     res.end();
     return;
   }
@@ -173,7 +174,7 @@ export const json: Route_handler = async (req, res, next) => {
 
 
   return new Promise<void>((resolve)=>{
-    req.on("close", async () => {
+    req.on("end", async () => {
     try {
       const parsed = JSON.parse(body);
       Object.assign(req, {body: parsed});
@@ -181,8 +182,8 @@ export const json: Route_handler = async (req, res, next) => {
       resolve()
     } catch (error) {
       console.error(error);
-      res.statusCode = 500;
-      res.write(JSON.stringify({error: "server error"}));
+      res.statusCode = 400;
+      res.write(JSON.stringify({error: "invalide request"}));
       res.end();
       resolve()
       return;

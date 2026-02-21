@@ -4,7 +4,10 @@ import UserController from "./controllers/Users.controller.js";
 const app = press()
 
 app.use(json)
-
+app.use((req , _ , next)=>{
+    console.log(req.url)
+    next()
+})
 app.use(UserController , "/users")
 
 
