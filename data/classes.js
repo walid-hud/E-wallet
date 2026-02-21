@@ -67,6 +67,7 @@ export class Wallet extends Serializable {
       return result;
     }
     this.balance += amount;
+    result.success = true;
     return result;
   }
 

@@ -1,6 +1,7 @@
 import { log } from "node:console";
 import press, { json } from "./lib/index.ts";
 import UserController from "./controllers/Users.controller.js";
+import WalletController from "./controllers/Wallets.controller.js";
 const app = press()
 
 app.use(json)
@@ -9,6 +10,7 @@ app.use((req , _ , next)=>{
     next()
 })
 app.use(UserController , "/users")
+app.use(WalletController , "/wallets")
 
 
 app.listen(3000, () => {
